@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Foundation Sprint — Strategy Canvas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  html,body{margin:0}
+  #root{min-height:100vh}
+  .fsi:focus,.fssel:focus{border-color:#2E6E5E !important;box-shadow:0 0 0 3px #E2EDE8}
+  .fsi::placeholder{color:#8A93A0;font-size:12px;font-style:italic;opacity:1}
+  .fsbtn:focus-visible{outline:2px solid #2E6E5E;outline-offset:2px}
+  .fsbtn:hover{filter:brightness(0.97)}
+  .fsrow:hover{background:#E2EDE8}
+  .fsrange{-webkit-appearance:none;appearance:none;height:4px;border-radius:999px;background:#E7E1D4;outline:none}
+  .fsrange::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:#2E6E5E;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer}
+  .fsrange::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#2E6E5E;border:2px solid #fff;cursor:pointer}
+  @media (max-width:620px){.fsgrid2,.fsgrid3{grid-template-columns:1fr !important}}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  .loadmsg{font-family:system-ui,sans-serif;color:#5A6673;text-align:center;padding:60px 20px}
+</style>
+</head>
+<body>
+<div id="root"><div class="loadmsg">Loading the canvas… (needs internet the first time to load React)</div></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* tokens */
+const C = { page:"#E7E3D8", card:"#FBFAF6", cardAlt:"#F3EFE6", ink:"#22303F", inkSoft:"#5A6673", inkFaint:"#8A93A0", line:"#DAD3C4", lineSoft:"#E7E1D4", teal:"#2E6E5E", tealSoft:"#E2EDE8", tealLine:"#B8D2C8", clay:"#B0603A", claySoft:"#F1E3D9", clayLine:"#E3C6B4" };
+const serif = "Georgia, 'Iowan Old Style', 'Times New Roman', serif";
+const sans = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+const mono = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
+
+/* storage (localStorage, guarded) */
+let STORAGE_OK = true;
+try { const t="__fs_test__"; localStorage.setItem(t,"1"); localStorage.removeItem(t); } catch(e){ STORAGE_OK=false; }
+const store = {
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} },
+};
+const uid = () => (window.crypto&&crypto.randomUUID ? crypto.randomUUID() : "id"+Date.now()+Math.random().toString(16).slice(2));
+
+const CLASSICS = [["slow","fast"],["hard","easy"],["expensive","free"],["unfocused","focused"],["complicated","simple"],["siloed","integrated"],["manual","automatic"],["not-so-smart","smart"]];
+const RISK_TYPES = [
+  "Value risk — do customers want this problem solved?",
+  "Value risk — will users buy it or use it?",
+  "Viability risk — will it deliver the expected business outcome?",
+  "Usability risk — will users know how to use it?",
+  "Feasibility risk — can we build it?",
+  "Financial risk — can we afford this solution?",
+  "Business development risk — does this work for our partners?",
+  "Marketing risk — is this consistent with our brand?",
+  "Legal risk — is this legal and compliant?",
+  "Ethical risk — is this something we should do?",
+];
+const blank = () => ({ id:null, name:"", objective:"", keyResult:"", customer:"", problem:"", capability:"", insight:"", motivation:"", risks:[{id:uid(),type:"",answer:""}], customerEmail:"", direct:"", substitutes:"", donothing:"", gorilla:"", classic:CLASSICS.map(()=>50), custom:[{id:uid(),low:"",high:"",val:50}], axis:{xLow:"",xHigh:"",yLow:"",yHigh:""}, you:{x:0.78,y:0.78}, competitors:[], reframe:"", deliver:"", p1:"", p2:"", safeguard:"", options:[{id:uid(),label:"",why:"",lenses:{customer:"",pragmatic:"",growth:"",money:""}}], topBet:"", backup:"", hypothesis:"", test:"" });
+
+const axInput = { flex:1, minWidth:0, boxSizing:"border-box", fontFamily:sans, fontSize:13, color:C.ink, background:"#fff", border:"1px solid "+C.line, borderRadius:7, padding:"7px 9px", outline:"none" };
+
+function Field({label,hint,value,onChange,area,placeholder,tone}){
+  const border = tone==="clay"?C.clayLine:C.line;
+  const common = { width:"100%", boxSizing:"border-box", fontFamily:sans, fontSize:14, color:C.ink, background:"#fff", border:"1px solid "+border, borderRadius:8, padding:"10px 12px", outline:"none", resize:"vertical", lineHeight:1.55 };
+  return (
+    <div style={{marginBottom:22}}>
+      <h4 style={{fontFamily:mono,fontSize:11.5,letterSpacing:".07em",textTransform:"uppercase",color:tone==="clay"?C.clay:C.ink,fontWeight:700,lineHeight:1.3,margin:0}}>{label}</h4>
+      {hint && <p style={{fontFamily:sans,fontSize:12,color:C.inkFaint,lineHeight:1.45,margin:"4px 0 0"}}>{hint}</p>}
+      <div style={{height:9}}/>
+      {area
+        ? <textarea className="fsi" rows={area} value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)} style={common}/>
+        : <input className="fsi" value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)} style={common}/>}
+    </div>
+  );
+}
+function Step({n,title,blurb,children,accent}){
+  return (
+    <section style={{marginBottom:22}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:14}}>
+        <div style={{flex:"0 0 auto",width:40,height:40,borderRadius:10,background:accent||C.ink,color:"#fff",fontFamily:mono,fontSize:17,fontWeight:700,display:"grid",placeItems:"center",boxShadow:"0 1px 0 rgba(0,0,0,.15)"}}>{n}</div>
+        <div>
+          <h2 style={{margin:0,fontFamily:serif,fontSize:22,color:C.ink,fontWeight:600,lineHeight:1.1}}>{title}</h2>
+          {blurb && <p style={{margin:"3px 0 0",fontFamily:sans,fontSize:13,color:C.inkSoft,lineHeight:1.45,maxWidth:640}}>{blurb}</p>}
+        </div>
+      </div>
+      <div style={{paddingLeft:54}}>{children}</div>
+    </section>
+  );
+}
+function Card({children,tone,style}){
+  const bg = tone==="teal"?C.tealSoft:tone==="clay"?C.claySoft:C.card;
+  const bd = tone==="teal"?C.tealLine:tone==="clay"?C.clayLine:C.line;
+  return <div style={Object.assign({background:bg,border:"1px solid "+bd,borderRadius:12,padding:16},style)}>{children}</div>;
+}
+function Btn({children,onClick,kind="ghost",small}){
+  const base = {fontFamily:sans,fontSize:small?12.5:13.5,fontWeight:600,cursor:"pointer",borderRadius:8,padding:small?"6px 10px":"8px 14px",border:"1px solid",transition:"filter .12s"};
+  const kinds = { solid:{background:C.ink,color:"#fff",borderColor:C.ink}, teal:{background:C.teal,color:"#fff",borderColor:C.teal}, ghost:{background:"#fff",color:C.ink,borderColor:C.line}, faint:{background:"transparent",color:C.inkSoft,borderColor:"transparent"} };
+  return <button className="fsbtn" onClick={onClick} style={Object.assign({},base,kinds[kind])}>{children}</button>;
+}
+function Grid2({children}){ return <div>{children}</div>; }
+function Grid3({children}){ return <div>{children}</div>; }
+
+function GroupLabel({children,note,color}){
+  return (
+    <div style={{marginBottom:16,paddingBottom:12,borderBottom:"1px solid "+C.lineSoft}}>
+      <h3 style={{fontFamily:mono,fontSize:12.5,letterSpacing:".07em",textTransform:"uppercase",color:color||C.teal,fontWeight:700,lineHeight:1.3,margin:0}}>{children}</h3>
+      {note && <p style={{fontFamily:sans,fontSize:12.5,color:C.inkSoft,lineHeight:1.55,margin:"6px 0 0"}}>{note}</p>}
+    </div>
+  );
+}
+function SubCard({children,tone,style}){
+  const bg = tone==="teal"?C.tealSoft:tone==="clay"?C.claySoft:"#fff";
+  const bd = tone==="teal"?C.tealLine:tone==="clay"?C.clayLine:C.line;
+  return <div style={Object.assign({background:bg,border:"1px solid "+bd,borderRadius:12,padding:"20px 22px",marginBottom:16},style)}>{children}</div>;
+}
+
+function Spectrum({low,high,val,onChange}){
+  return (
+    <div style={{display:"grid",gridTemplateColumns:"108px 1fr 108px",alignItems:"center",gap:10,padding:"3px 0"}}>
+      <span style={{fontFamily:sans,fontSize:12.5,color:C.inkSoft,textAlign:"right"}}>{low}</span>
+      <input className="fsrange" type="range" min="0" max="100" value={val} onChange={e=>onChange(+e.target.value)}/>
+      <span style={{fontFamily:sans,fontSize:12.5,color:C.ink,fontWeight:600}}>{high}</span>
+    </div>
+  );
+}
+
+function Matrix({data,set}){
+  const ref = useRef(null); const drag = useRef(null); const [,force] = useState(0);
+  const toFrac = useCallback((cx,cy)=>{ const r=ref.current.getBoundingClientRect(); let x=(cx-r.left)/r.width; let y=1-(cy-r.top)/r.height; return {x:Math.max(0,Math.min(1,x)),y:Math.max(0,Math.min(1,y))}; },[]);
+  const onMove = useCallback((e)=>{ if(!drag.current) return; const p="touches" in e?e.touches[0]:e; const f=toFrac(p.clientX,p.clientY); if(drag.current==="you") set(d=>Object.assign({},d,{you:f})); else set(d=>Object.assign({},d,{competitors:d.competitors.map(c=>c.id===drag.current?Object.assign({},c,f):c)})); },[set,toFrac]);
+  const stop = useCallback(()=>{ drag.current=null; force(n=>n+1); },[]);
+  useEffect(()=>{ window.addEventListener("pointermove",onMove); window.addEventListener("pointerup",stop); return ()=>{ window.removeEventListener("pointermove",onMove); window.removeEventListener("pointerup",stop); }; },[onMove,stop]);
+  const A = data.axis;
+  const marker = (key,label,x,y,tone)=>{ const bg=tone==="teal"?C.teal:C.clay; return (
+    <div key={key} onPointerDown={e=>{e.preventDefault();drag.current=key;force(n=>n+1);}} style={{position:"absolute",left:(x*100)+"%",bottom:(y*100)+"%",transform:"translate(-50%,50%)",touchAction:"none",cursor:"grab",userSelect:"none",zIndex:3}}>
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <div style={{width:15,height:15,borderRadius:"50%",background:bg,border:"2.5px solid #fff",boxShadow:"0 1px 4px rgba(0,0,0,.25)"}}/>
+        <span style={{fontFamily:sans,fontSize:12,fontWeight:700,color:C.ink,background:"rgba(255,255,255,.82)",padding:"1px 6px",borderRadius:5,whiteSpace:"nowrap"}}>{label}</span>
+      </div>
+    </div>); };
+  const axisLabel = (t,style)=> <span style={Object.assign({position:"absolute",fontFamily:mono,fontSize:10.5,letterSpacing:".03em",color:C.inkSoft,textTransform:"uppercase"},style)}>{t||"—"}</span>;
+  return (
+    <Card style={{padding:18}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:20,alignItems:"flex-start"}}>
+        <div style={{flex:"1 1 320px",minWidth:280}}>
+          <div style={{display:"flex",gap:10}}>
+            {/* vertical axis end labels */}
+            <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",alignItems:"flex-end",width:78,textAlign:"right",paddingBottom:26}}>
+              <span style={{fontFamily:sans,fontSize:12,fontWeight:700,color:C.teal,lineHeight:1.25}}>{A.yHigh||"top label"}</span>
+              <span style={{fontFamily:sans,fontSize:12,fontWeight:700,color:C.inkFaint,lineHeight:1.25}}>{A.yLow||"bottom label"}</span>
+            </div>
+            <div style={{flex:1}}>
+              <div ref={ref} style={{position:"relative",width:"100%",aspectRatio:"1 / 1",background:"#fff",border:"1px solid "+C.line,borderRadius:10,overflow:"hidden",touchAction:"none"}}>
+                <div style={{position:"absolute",right:0,top:0,width:"50%",height:"50%",background:C.tealSoft}}/>
+                <div style={{position:"absolute",left:0,bottom:0,width:"50%",height:"100%",background:"rgba(176,96,58,.06)"}}/>
+                <div style={{position:"absolute",right:0,bottom:0,width:"50%",height:"50%",background:"rgba(176,96,58,.06)"}}/>
+                <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:C.lineSoft}}/>
+                <div style={{position:"absolute",top:"50%",left:0,right:0,height:1,background:C.lineSoft}}/>
+                <span style={{position:"absolute",right:8,top:6,fontFamily:mono,fontSize:9.5,color:C.teal,fontWeight:700,letterSpacing:".05em"}}>YOU WIN HERE</span>
+                <span style={{position:"absolute",left:8,bottom:6,fontFamily:mono,fontSize:9.5,color:C.clay,opacity:.85,letterSpacing:".05em"}}>AVOID</span>
+                {marker("you","You",data.you.x,data.you.y,"teal")}
+                {data.competitors.map(c=>marker(c.id,c.name||"Rival",c.x,c.y,"clay"))}
+              </div>
+              {/* horizontal axis end labels */}
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+                <span style={{fontFamily:sans,fontSize:12,fontWeight:700,color:C.inkFaint}}>{A.xLow||"left label"}</span>
+                <span style={{fontFamily:sans,fontSize:12,fontWeight:700,color:C.teal}}>{A.xHigh||"right label"}</span>
+              </div>
+            </div>
+          </div>
+          <p style={{fontFamily:sans,fontSize:11.5,color:C.inkFaint,margin:"8px 0 0"}}>Drag each dot. Aim to get <b style={{color:C.teal}}>You</b> alone in the green corner, with competitors in the other three.</p>
+        </div>
+        <div style={{flex:"1 1 240px",minWidth:220}}>
+          <h4 style={{fontFamily:mono,fontSize:11.5,textTransform:"uppercase",letterSpacing:".07em",color:C.ink,fontWeight:700,margin:"0 0 4px"}}>1st differentiator — left/right</h4>
+          <p style={{fontFamily:sans,fontSize:11.5,color:C.inkFaint,margin:"0 0 6px"}}>Type the two ends. These labels show on the grid.</p>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <input className="fsi" placeholder="weaker (left)" value={A.xLow} onChange={e=>set(d=>Object.assign({},d,{axis:Object.assign({},d.axis,{xLow:e.target.value})}))} style={axInput}/>
+            <span style={{alignSelf:"center",color:C.inkFaint}}>→</span>
+            <input className="fsi" placeholder="stronger (right)" value={A.xHigh} onChange={e=>set(d=>Object.assign({},d,{axis:Object.assign({},d.axis,{xHigh:e.target.value})}))} style={axInput}/>
+          </div>
+          <h4 style={{fontFamily:mono,fontSize:11.5,textTransform:"uppercase",letterSpacing:".07em",color:C.ink,fontWeight:700,margin:"0 0 6px"}}>2nd differentiator — bottom/top</h4>
+          <div style={{display:"flex",gap:8,marginBottom:16}}>
+            <input className="fsi" placeholder="weaker (bottom)" value={A.yLow} onChange={e=>set(d=>Object.assign({},d,{axis:Object.assign({},d.axis,{yLow:e.target.value})}))} style={axInput}/>
+            <span style={{alignSelf:"center",color:C.inkFaint}}>→</span>
+            <input className="fsi" placeholder="stronger (top)" value={A.yHigh} onChange={e=>set(d=>Object.assign({},d,{axis:Object.assign({},d.axis,{yHigh:e.target.value})}))} style={axInput}/>
+          </div>
+          <h4 style={{fontFamily:mono,fontSize:11.5,textTransform:"uppercase",letterSpacing:".07em",color:C.ink,fontWeight:700,margin:"0 0 8px"}}>Competitors on the grid</h4>
+          {data.competitors.map(c=>(
+            <div key={c.id} style={{display:"flex",gap:6,marginBottom:6}}>
+              <input className="fsi" value={c.name} placeholder="Rival name" onChange={e=>set(d=>Object.assign({},d,{competitors:d.competitors.map(x=>x.id===c.id?Object.assign({},x,{name:e.target.value}):x)}))} style={Object.assign({},axInput,{flex:1})}/>
+              <Btn small kind="faint" onClick={()=>set(d=>Object.assign({},d,{competitors:d.competitors.filter(x=>x.id!==c.id)}))}>✕</Btn>
+            </div>
+          ))}
+          <Btn small onClick={()=>set(d=>Object.assign({},d,{competitors:d.competitors.concat([{id:uid(),name:"",x:0.28,y:0.3}])}))}>+ Add competitor</Btn>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function MiniCard({title,body}){
+  return (<div style={{background:"#fff",border:"1px solid "+C.line,borderRadius:9,padding:"11px 13px",marginBottom:10}}>
+    <h4 style={{fontFamily:sans,fontSize:13.5,fontWeight:700,color:C.ink,margin:"0 0 3px"}}>{title}</h4>
+    <p style={{fontFamily:sans,fontSize:12.5,color:C.inkSoft,lineHeight:1.5,margin:0}}>{body}</p>
+  </div>);
+}
+function RunForReal({open,onToggle}){
+  return (
+    <div style={{border:"1px solid "+C.line,borderRadius:12,background:C.cardAlt,marginBottom:22,overflow:"hidden"}}>
+      <button onClick={onToggle} className="fsbtn" style={{width:"100%",textAlign:"left",background:"transparent",border:"none",cursor:"pointer",padding:"13px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontFamily:mono,fontSize:12,letterSpacing:".03em",textTransform:"uppercase",color:C.ink,fontWeight:700}}>▸ Running this for real — the sprint mechanics</span>
+        <span style={{fontFamily:sans,fontSize:12.5,color:C.inkSoft}}>{open?"Hide":"Show"}</span>
+      </button>
+      {open && (
+        <div style={{padding:"4px 16px 18px",fontFamily:sans,fontSize:13.5,color:C.ink,lineHeight:1.6}}>
+          <p style={{margin:"0 0 12px",color:C.inkSoft}}>This canvas captures the <i>decisions</i>. When you run a real Foundation Sprint with a team, drive every choice with the same four moves:</p>
+          <Grid2>
+            <MiniCard title="Get started, not perfect" body="You're drafting a testable hypothesis, not a launch plan. Make the call, move on, and let real prototypes correct you later."/>
+            <MiniCard title="Work alone together" body="For each question, everyone writes options silently first, then you compare. Kills groupthink and the loudest-voice problem — and it's faster."/>
+            <MiniCard title="Note-and-Vote" body="Ask the question → 5 min silent writing → post anonymously → 5 min silent voting → short debate only if needed → the Decider decides. Repeat for each part of the opportunity assessment, the differentiators, principles, and approaches."/>
+            <MiniCard title="The Decider" body="One named person owns each call and doesn't have to follow the votes. Without a real Decider the choices won't stick — don't run it without them."/>
+          </Grid2>
+          <div style={{marginTop:14,fontFamily:mono,fontSize:11,textTransform:"uppercase",letterSpacing:".04em",color:C.inkSoft,fontWeight:600,marginBottom:6}}>The two-day shape</div>
+          <p style={{margin:0,color:C.inkSoft}}><b style={{color:C.ink}}>Day 1 — foundation:</b> Opportunity Assessment → Differentiation (2×2) → Principles. &nbsp; <b style={{color:C.ink}}>Day 2 — approach:</b> generate options → score them through the four lenses → pick a top bet + backup → write the Founding Hypothesis. Do the opportunity assessment as pre-work to compress into one day.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function toMarkdown(d){
+  const lens = o => "C:"+(o.lenses.customer||"–")+" P:"+(o.lenses.pragmatic||"–")+" G:"+(o.lenses.growth||"–")+" $:"+(o.lenses.money||"–");
+  const cl = d.classic.map((v,i)=>CLASSICS[i][0]+" ↔ "+CLASSICS[i][1]+": "+v).join(" · ");
+  return "# Foundation Sprint — "+(d.name||"Untitled")+"\n\n"+
+"## 1 · Opportunity Assessment\n- Business objective: "+d.objective+"\n- Key result: "+d.keyResult+"\n- Customer (persona / market / job): "+d.customer+"\n- Problem: "+d.problem+"\n- Advantage — capability: "+d.capability+"\n- Advantage — insight: "+d.insight+"\n- Advantage — motivation: "+d.motivation+"\n- Risks to address:\n"+((d.risks||[]).filter(r=>r.type||r.answer).map(r=>"    • "+(r.type||"(risk)")+" — "+r.answer).join("\n")||"    • (none noted)")+"\n- Competition — direct: "+d.direct+"\n- Competition — substitutes: "+d.substitutes+"\n- Competition — \"do nothing\": "+d.donothing+"\n- Biggest competitor: "+d.gorilla+"\n- Customer email (vision of success): "+d.customerEmail+"\n\n"+
+"## 2 · Differentiation\n- Classic scan (0=left,100=right): "+cl+"\n- Custom pairs: "+d.custom.map(c=>c.low+" ↔ "+c.high+" ("+c.val+")").join(" · ")+"\n- Axis 1: "+d.axis.xLow+" → "+d.axis.xHigh+"\n- Axis 2: "+d.axis.yLow+" → "+d.axis.yHigh+"\n- Your position: x "+d.you.x.toFixed(2)+", y "+d.you.y.toFixed(2)+"\n- Competitors: "+d.competitors.map(c=>c.name+" (x "+c.x.toFixed(2)+", y "+c.y.toFixed(2)+")").join(" · ")+"\n- Reframe: "+d.reframe+"\n- Deliverability check: "+d.deliver+"\n\n"+
+"## 3 · Principles\n1. "+d.p1+"\n2. "+d.p2+"\n3. (safeguard) "+d.safeguard+"\n\n"+
+"## 4 · Approach\n"+d.options.map((o,i)=>"- Option "+String.fromCharCode(65+i)+": "+o.label+" — "+o.why+" ["+lens(o)+"]").join("\n")+"\n- Top bet: "+d.topBet+"\n- Backup: "+d.backup+"\n\n"+
+"## 5 · Founding Hypothesis\n> "+d.hypothesis+"\n\nTest: "+d.test+"\n";
+}
+
+const LENS_PTS = {H:3,M:2,L:1};
+const lensTotal = o => ["customer","pragmatic","growth","money"].reduce((s,k)=>s+(LENS_PTS[o.lenses[k]]||0),0);
+
+function App(){
+  const [data,setData] = useState(blank());
+  const [index,setIndex] = useState([]);
+  const [runOpen,setRunOpen] = useState(false);
+  const [loadOpen,setLoadOpen] = useState(false);
+  const [exportText,setExportText] = useState(null);
+  const [toast,setToast] = useState("");
+  const set = useCallback(u => setData(d => (typeof u==="function"?u(d):u)),[]);
+  const field = k => v => set(d=>Object.assign({},d,{[k]:v}));
+
+  useEffect(()=>{ const w=store.get("fs_working"); if(w){ const m=Object.assign(blank(),w); if(typeof m.name!=="string") m.name=""; if(!Array.isArray(m.risks)||!m.risks.length) m.risks=[{id:uid(),type:"",answer:""}]; setData(m); } const idx=store.get("fs_index"); if(idx) setIndex(idx); },[]);
+  useEffect(()=>{ store.set("fs_working",data); },[data]);
+  const flash = m => { setToast(m); setTimeout(()=>setToast(""),1800); };
+
+  function save(){
+    let d=data; if(!d.id) d=Object.assign({},d,{id:uid()});
+    const nm=d.name||"Untitled case"; d=Object.assign({},d,{name:nm}); setData(d);
+    if(!STORAGE_OK){ flash("Saved this session — your browser blocked local storage"); return; }
+    store.set("fs_scn_"+d.id,d);
+    const next=[{id:d.id,name:nm}].concat(index.filter(x=>x.id!==d.id));
+    setIndex(next); store.set("fs_index",next); flash("Case saved");
+  }
+  function load(id){ const d=store.get("fs_scn_"+id); if(d){ const m=Object.assign(blank(),d); if(!Array.isArray(m.risks)||!m.risks.length) m.risks=[{id:uid(),type:"",answer:""}]; setData(m); setLoadOpen(false); flash("Loaded"); } }
+  function removeCase(id,e){ e.stopPropagation(); store.del("fs_scn_"+id); const next=index.filter(x=>x.id!==id); setIndex(next); store.set("fs_index",next); if(data.id===id) setData(blank()); }
+  function newCase(){ setData(blank()); setLoadOpen(false); flash("New case"); }
+  function autofillHypothesis(){
+    const diff=[data.axis.xHigh,data.axis.yHigh].filter(Boolean).join(" and ");
+    const approach=data.topBet||(data.options[0]&&data.options[0].label)||"Our approach";
+    const s=(approach||"Our approach")+" will help "+(data.customer||"[customer]")+" solve "+(data.problem||"[their problem]")+" better than "+(data.gorilla||data.direct||"[the competition]")+(diff?(" because it is "+diff):"")+".";
+    set(d=>Object.assign({},d,{hypothesis:s}));
+  }
+  function doExport(){ const md=toMarkdown(data); setExportText(md); if(navigator.clipboard){ navigator.clipboard.writeText(md).then(()=>flash("Copied to clipboard")).catch(()=>{}); } }
+  function download(){ try{ const md=toMarkdown(data); const b=new Blob([md],{type:"text/markdown"}); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=(data.name||"foundation-sprint")+".md"; a.click(); URL.revokeObjectURL(u); flash("Downloaded .md"); }catch(e){ flash("Download blocked — use Copy"); } }
+
+  return (
+    <div style={{background:C.page,minHeight:"100vh",fontFamily:sans,color:C.ink}}>
+      <div style={{maxWidth:860,margin:"0 auto",padding:"26px 20px 80px"}}>
+        <header style={{marginBottom:18}}>
+          <p style={{fontFamily:mono,fontSize:11,letterSpacing:".14em",textTransform:"uppercase",color:C.teal,fontWeight:700,margin:0}}>Discovery phase</p>
+          <h1 style={{margin:"4px 0 2px",fontFamily:serif,fontSize:30,fontWeight:600,letterSpacing:"-.01em"}}>Foundation Canvas</h1>
+        </header>
+
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",marginBottom:18,position:"relative"}}>
+          <input className="fsi" value={data.name} placeholder="Name this case…" onChange={e=>set(d=>Object.assign({},d,{name:e.target.value}))} style={{flex:"1 1 200px",minWidth:160,fontFamily:sans,fontSize:14,fontWeight:600,color:C.ink,background:"#fff",border:"1px solid "+C.line,borderRadius:8,padding:"9px 12px",outline:"none"}}/>
+          <Btn kind="teal" onClick={save}>Save case</Btn>
+          <Btn onClick={()=>setLoadOpen(o=>!o)}>Load ▾</Btn>
+          <Btn onClick={newCase}>New</Btn>
+          <Btn kind="solid" onClick={doExport}>Export</Btn>
+          {loadOpen && (
+            <div style={{position:"absolute",top:"100%",right:0,marginTop:6,width:280,maxHeight:280,overflow:"auto",background:"#fff",border:"1px solid "+C.line,borderRadius:10,boxShadow:"0 8px 24px rgba(0,0,0,.12)",zIndex:20,padding:6}}>
+              {index.length===0 && <div style={{padding:12,fontSize:13,color:C.inkFaint}}>No saved cases yet.</div>}
+              {index.map(x=>(
+                <div key={x.id} onClick={()=>load(x.id)} className="fsrow" style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:7,cursor:"pointer"}}>
+                  <span style={{fontSize:13.5,color:C.ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.name}</span>
+                  <button onClick={e=>removeCase(x.id,e)} className="fsbtn" style={{border:"none",background:"transparent",cursor:"pointer",color:C.inkFaint,fontSize:13}}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <p style={{fontFamily:sans,fontSize:12,color:C.inkSoft,margin:"0 0 14px",lineHeight:1.5}}><b>Save case</b> keeps it inside this browser so you can reopen it later with <b>Load</b>. To get a file you can keep or share, click <b>Export</b> → <b>Download .md</b>.</p>
+
+        {!STORAGE_OK && <p style={{background:C.claySoft,border:"1px solid "+C.clayLine,borderRadius:10,padding:"10px 14px",margin:"0 0 18px",fontFamily:sans,fontSize:12.5,color:C.clay,lineHeight:1.5}}>Your browser is blocking local storage (common when a file is opened straight off disk in some browsers). The canvas works fully, but saved cases won't persist between sessions — use <b>Export</b> to keep your work.</p>}
+
+        <RunForReal open={runOpen} onToggle={()=>setRunOpen(o=>!o)}/>
+
+        <Step n="1" title="Opportunity Assessment" blurb="Discovery framing">
+          <SubCard tone="teal">
+            <GroupLabel note="Why this matters, and how you'll know it worked.">The goal</GroupLabel>
+            <Grid2>
+              <Field label="Business objective" hint="the business goal this serves" value={data.objective} onChange={field("objective")} placeholder="What outcome are we trying to move?" area={2}/>
+              <Field label="Key result" hint="how will we know we've succeeded?" value={data.keyResult} onChange={field("keyResult")} placeholder="The measurable signal of success" area={2}/>
+            </Grid2>
+          </SubCard>
+
+          <SubCard>
+            <GroupLabel>Customer &amp; problem</GroupLabel>
+            <Grid2>
+              <Field label="Customer" hint="persona · target market · job to be done" value={data.customer} onChange={field("customer")} placeholder="Who they are, the market they're in, and the job they're hiring this to do" area={3}/>
+              <Field label="Problem" hint="worth time or money to solve" value={data.problem} onChange={field("problem")} placeholder="What real problem do they have?" area={3}/>
+            </Grid2>
+          </SubCard>
+
+          <SubCard>
+            <GroupLabel note="Your unfair edge — the reason you can win where others can't. You'll build your differentiators on top of it, so a strong edge only counts if rivals can't easily copy it.">Advantage — capability + insight + motivation</GroupLabel>
+            <Grid3>
+              <Field label="Capability" hint="what you can do that rivals can't" value={data.capability} onChange={field("capability")} placeholder="A skill, asset, tech, or relationship others lack" area={2}/>
+              <Field label="Insight" hint="what you understand that others miss" value={data.insight} onChange={field("insight")} placeholder="A deeper truth about the customer or the problem" area={2}/>
+              <Field label="Motivation" hint="why you'll outlast people just passing through" value={data.motivation} onChange={field("motivation")} placeholder="Of everything you could do — why this?" area={2}/>
+            </Grid3>
+          </SubCard>
+
+          <SubCard tone="clay">
+            <GroupLabel color={C.clay} note="Pick the risks that could sink this, and note how you'll tackle each one. Add as many as you need.">Risks to address</GroupLabel>
+            {data.risks.map(r=>(
+              <div key={r.id} style={{display:"flex",gap:8,alignItems:"center",marginBottom:8,flexWrap:"wrap"}}>
+                <select className="fssel" value={r.type} onChange={e=>set(d=>Object.assign({},d,{risks:d.risks.map(x=>x.id===r.id?Object.assign({},x,{type:e.target.value}):x)}))} style={{flex:"1 1 260px",minWidth:220,fontFamily:sans,fontSize:13,padding:"8px 9px",border:"1px solid "+C.clayLine,borderRadius:7,background:"#fff",color:C.ink}}>
+                  <option value="">Choose a risk…</option>
+                  {RISK_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+                <input className="fsi" placeholder="How will you address it?" value={r.answer} onChange={e=>set(d=>Object.assign({},d,{risks:d.risks.map(x=>x.id===r.id?Object.assign({},x,{answer:e.target.value}):x)}))} style={Object.assign({},axInput,{flex:"2 1 240px"})}/>
+                <Btn small kind="faint" onClick={()=>set(d=>Object.assign({},d,{risks:d.risks.filter(x=>x.id!==r.id)}))}>✕</Btn>
+              </div>
+            ))}
+            <Btn small onClick={()=>set(d=>Object.assign({},d,{risks:d.risks.concat([{id:uid(),type:"",answer:""}])}))}>+ Add risk</Btn>
+          </SubCard>
+
+          <SubCard>
+            <GroupLabel>Competition — what do they choose instead?</GroupLabel>
+            <Grid3>
+              <Field label="Direct rivals" value={data.direct} onChange={field("direct")} placeholder="Named competitors" area={2}/>
+              <Field label="Substitutes" hint="workarounds" value={data.substitutes} onChange={field("substitutes")} placeholder="How they cope today" area={2}/>
+              <Field label={'"Do nothing"'} value={data.donothing} onChange={field("donothing")} placeholder="Living with it, unsolved" area={2}/>
+            </Grid3>
+            <Field label="Biggest competitor" hint="the single toughest thing to beat — aim your differentiation against this, not the easiest rival" value={data.gorilla} onChange={field("gorilla")} placeholder="Who or what are you really up against?"/>
+          </SubCard>
+
+          <SubCard tone="teal">
+            <GroupLabel note="Imagine it's a year after launch. Write the email a delighted customer sends the CEO — what changed for them, how it improved their life, and why they're grateful.">Customer email — picture success</GroupLabel>
+            <textarea className="fsi" rows={6} value={data.customerEmail} onChange={e=>set(d=>Object.assign({},d,{customerEmail:e.target.value}))} placeholder="Dear [CEO], ever since your team launched [product], my …" style={{width:"100%",boxSizing:"border-box",fontFamily:sans,fontSize:14,color:C.ink,background:"#fff",border:"1px solid "+C.tealLine,borderRadius:8,padding:"11px 13px",outline:"none",resize:"vertical",lineHeight:1.6}}/>
+          </SubCard>
+        </Step>
+
+        <Step n="2" title="Differentiation" accent={C.teal} blurb="The engine — this is where “why would they switch?” gets answered. Position to your future best state, not today's product.">
+          <Card style={{marginBottom:14}}>
+            <p style={{fontFamily:sans,fontSize:13,color:C.inkSoft,margin:"0 0 10px"}}>Quick scan — where could you land against your biggest competitor?</p>
+            {CLASSICS.map((pair,i)=>(<Spectrum key={i} low={pair[0]} high={pair[1]} val={data.classic[i]} onChange={v=>set(d=>{const c=d.classic.slice();c[i]=v;return Object.assign({},d,{classic:c});})}/>))}
+            <h4 style={{fontFamily:mono,fontSize:11.5,textTransform:"uppercase",letterSpacing:".07em",color:C.ink,fontWeight:700,margin:"18px 0 8px"}}>Your own “good vs. crummy” pairs</h4>
+            {data.custom.map(c=>(
+              <div key={c.id} style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                <input className="fsi" placeholder="crummy (them)" value={c.low} onChange={e=>set(d=>Object.assign({},d,{custom:d.custom.map(x=>x.id===c.id?Object.assign({},x,{low:e.target.value}):x)}))} style={axInput}/>
+                <span style={{color:C.inkFaint}}>↔</span>
+                <input className="fsi" placeholder="great (you)" value={c.high} onChange={e=>set(d=>Object.assign({},d,{custom:d.custom.map(x=>x.id===c.id?Object.assign({},x,{high:e.target.value}):x)}))} style={axInput}/>
+                <Btn small kind="faint" onClick={()=>set(d=>Object.assign({},d,{custom:d.custom.filter(x=>x.id!==c.id)}))}>✕</Btn>
+              </div>
+            ))}
+            <Btn small onClick={()=>set(d=>Object.assign({},d,{custom:d.custom.concat([{id:uid(),low:"",high:"",val:50}])}))}>+ Add pair</Btn>
+          </Card>
+          <p style={{fontFamily:sans,fontSize:13,color:C.inkSoft,margin:"0 0 8px"}}>Pick your two sharpest axes and build the 2×2 — own the top-right <b style={{color:C.teal}}>alone</b>.</p>
+          <Matrix data={data} set={set}/>
+          <div style={{marginTop:14}}>
+            <Card tone="teal">
+              <Field label="Change what they compare on? (optional)" hint="Give customers a new, simpler way to decide — one that favours you." value={data.reframe} onChange={field("reframe")} placeholder="e.g. Instead of 'whose price is lowest', make it 'who saves me the most time'." area={2}/>
+              <Field label="Can you actually deliver this?" hint="Be honest. If your team can't realistically build this edge, pick a different one." value={data.deliver} onChange={field("deliver")} placeholder="e.g. Yes — we already have the data and the team to pull this off." area={2}/>
+            </Card>
+          </div>
+        </Step>
+
+        <Step n="3" title="Principles" blurb="Simple rules that keep you true to your differentiation when hard calls come up. For each one, ask: how do we stay true to this?">
+          <Card>
+            <Field label="Principle 1 — from differentiator 1" hint="How do we stay true to this?" value={data.p1} onChange={field("p1")} placeholder="A rule you can test features against" area={2}/>
+            <Field label="Principle 2 — from differentiator 2" hint="How do we stay true to this?" value={data.p2} onChange={field("p2")} placeholder="A second simple rule" area={2}/>
+          </Card>
+          <div style={{marginTop:10}}>
+            <Card tone="clay">
+              <Field tone="clay" label="Principle 3 — safeguard" hint="imagine a SUCCESSFUL version makes things worse; write the rule that prevents it" value={data.safeguard} onChange={field("safeguard")} placeholder="e.g. Empower, don't replace." area={2}/>
+            </Card>
+          </div>
+        </Step>
+
+        <Step n="4" title="Approach" blurb="List a few ways you could build this, then rate each one to pick your best bet.">
+          <Card style={{marginBottom:12}}>
+            <p style={{fontFamily:sans,fontSize:12.5,color:C.inkFaint,margin:"0 0 10px"}}>Stuck for options? Ask: “If my first idea failed, what else could work?” · “How would a competitor build it?” · Could a different customer be the place to start? Boring ideas are fine.</p>
+            <div style={{background:C.cardAlt,border:"1px solid "+C.line,borderRadius:9,padding:"10px 12px",marginBottom:14,fontFamily:sans,fontSize:12.5,color:C.ink,lineHeight:1.55}}>
+              <b>How the rating works:</b> for each option, pick <b>H</b>igh, <b>M</b>edium, or <b>L</b>ow on the four questions below. The tool adds them up (H=3, M=2, L=1) and shows a total out of 12. The highest total earns a ★ — usually your top bet.
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"2px 14px",marginTop:8,color:C.inkSoft}}>
+                <span><b style={{color:C.ink}}>Customer</b> — best for the user?</span>
+                <span><b style={{color:C.ink}}>Pragmatic</b> — easy &amp; fast to build?</span>
+                <span><b style={{color:C.ink}}>Growth</b> — spreads or scales well?</span>
+                <span><b style={{color:C.ink}}>Money</b> — strongest business?</span>
+              </div>
+            </div>
+            {data.options.map((o,i)=>{
+              const tot=lensTotal(o);
+              const best=Math.max.apply(null,data.options.map(lensTotal).concat([0]));
+              return (
+              <div key={o.id} style={{borderTop:i?"1px solid "+C.lineSoft:"none",paddingTop:i?12:0,marginBottom:12}}>
+                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                  <span style={{fontFamily:mono,fontWeight:700,color:C.teal,fontSize:14}}>{String.fromCharCode(65+i)}</span>
+                  <input className="fsi" placeholder="Option name (app, plugin, service…)" value={o.label} onChange={e=>set(d=>Object.assign({},d,{options:d.options.map(x=>x.id===o.id?Object.assign({},x,{label:e.target.value}):x)}))} style={Object.assign({},axInput,{fontWeight:600})}/>
+                  <span title="total score out of 12" style={{fontFamily:mono,fontSize:11.5,fontWeight:700,whiteSpace:"nowrap",color:(tot&&tot===best)?C.teal:C.inkFaint}}>{tot?(tot+"/12"):""}{(tot&&tot===best)?" ★":""}</span>
+                  <Btn small kind="faint" onClick={()=>set(d=>Object.assign({},d,{options:d.options.filter(x=>x.id!==o.id)}))}>✕</Btn>
+                </div>
+                <input className="fsi" placeholder="Why it's good — mention the problem and what makes you different" value={o.why} onChange={e=>set(d=>Object.assign({},d,{options:d.options.map(x=>x.id===o.id?Object.assign({},x,{why:e.target.value}):x)}))} style={Object.assign({},axInput,{width:"100%",marginBottom:8})}/>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {[["customer","Customer"],["pragmatic","Pragmatic"],["growth","Growth"],["money","Money"]].map(pair=>(
+                    <div key={pair[0]} style={{display:"flex",alignItems:"center",gap:5}}>
+                      <span style={{fontFamily:mono,fontSize:10.5,color:C.inkSoft,textTransform:"uppercase"}}>{pair[1]}</span>
+                      <select className="fssel" value={o.lenses[pair[0]]} onChange={e=>set(d=>Object.assign({},d,{options:d.options.map(x=>x.id===o.id?Object.assign({},x,{lenses:Object.assign({},x.lenses,{[pair[0]]:e.target.value})}):x)}))} style={{fontFamily:sans,fontSize:12.5,padding:"4px 6px",border:"1px solid "+C.line,borderRadius:6,background:"#fff",color:C.ink}}>
+                        <option value="">–</option><option>H</option><option>M</option><option>L</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              );
+            })}
+            <Btn small onClick={()=>set(d=>Object.assign({},d,{options:d.options.concat([{id:uid(),label:"",why:"",lenses:{customer:"",pragmatic:"",growth:"",money:""}}])}))}>+ Add option</Btn>
+          </Card>
+          <Grid2>
+            <Field label="⭐ Top bet" value={data.topBet} onChange={field("topBet")} placeholder="Your first-choice approach"/>
+            <Field label="Backup plan" value={data.backup} onChange={field("backup")} placeholder="Next approach if you pivot"/>
+          </Grid2>
+        </Step>
+
+        <Step n="5" title="Founding Hypothesis" accent={C.teal} blurb="Distill the whole canvas into one simple, testable promise. Simple on purpose — or customers won't pay attention.">
+          <Card tone="teal">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8,flexWrap:"wrap",gap:8}}>
+              <h4 style={{fontFamily:mono,fontSize:11.5,textTransform:"uppercase",letterSpacing:".07em",color:C.teal,fontWeight:700,margin:0}}>The promise</h4>
+              <Btn small kind="teal" onClick={autofillHypothesis}>Auto-fill from canvas</Btn>
+            </div>
+            <textarea className="fsi" rows={3} value={data.hypothesis} onChange={field("hypothesis")} placeholder="[approach] will help [customer] solve [problem] better than [the competition] because [differentiation]." style={{width:"100%",boxSizing:"border-box",fontFamily:mono,fontSize:15,lineHeight:1.6,color:C.ink,background:"#fff",border:"1px solid "+C.tealLine,borderRadius:8,padding:"12px 14px",outline:"none",resize:"vertical"}}/>
+            <div style={{marginTop:12}}>
+              <Field label="How I'll test it next" hint="the cheapest experiment that could prove it wrong" value={data.test} onChange={field("test")} placeholder="Smallest test that could disconfirm the promise" area={2}/>
+            </div>
+          </Card>
+        </Step>
+
+        <footer style={{marginTop:26,paddingTop:16,borderTop:"1px solid "+C.line,fontFamily:sans,fontSize:12,color:C.inkFaint}}>
+          Method from Knapp &amp; Zeratsky, <i>Click</i>, and Marty Cagan, <i>Inspired</i>.
+        </footer>
+      </div>
+
+      {exportText!==null && (
+        <div onClick={()=>setExportText(null)} style={{position:"fixed",inset:0,background:"rgba(34,48,63,.4)",display:"grid",placeItems:"center",padding:20,zIndex:50}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:14,maxWidth:640,width:"100%",maxHeight:"82vh",display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 20px 60px rgba(0,0,0,.3)"}}>
+            <div style={{padding:"14px 18px",borderBottom:"1px solid "+C.line,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontFamily:serif,fontSize:18,color:C.ink}}>Export — Markdown</span>
+              <Btn small kind="faint" onClick={()=>setExportText(null)}>Close ✕</Btn>
+            </div>
+            <textarea readOnly value={exportText} style={{flex:1,minHeight:320,fontFamily:mono,fontSize:12.5,lineHeight:1.5,color:C.ink,border:"none",outline:"none",padding:18,resize:"none"}}/>
+            <div style={{padding:"12px 18px",borderTop:"1px solid "+C.line,display:"flex",justifyContent:"flex-end",gap:8}}>
+              <Btn onClick={download}>Download .md</Btn>
+              <Btn kind="teal" onClick={()=>{ if(navigator.clipboard){navigator.clipboard.writeText(exportText).then(()=>flash("Copied")).catch(()=>flash("Select all and copy"));} else flash("Select all and copy"); }}>Copy to clipboard</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <div style={{position:"fixed",bottom:22,left:"50%",transform:"translateX(-50%)",background:C.ink,color:"#fff",fontFamily:sans,fontSize:13,padding:"9px 16px",borderRadius:999,zIndex:60,boxShadow:"0 6px 20px rgba(0,0,0,.25)"}}>{toast}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
