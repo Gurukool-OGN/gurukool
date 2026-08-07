@@ -1,2 +1,1 @@
-# Gurukool
 Gurukool is my attempt to follow curiosity and learn and teach in the open — putting my actual way of working out here, because you learn best by teaching. The name comes from the school my grandfather co-founded in pre-independence India, built on one idea: if you're curious enough to learn, just come and learn.
