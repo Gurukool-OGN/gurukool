@@ -2,8 +2,8 @@
 <!--
   index.html — the home page for Gurukool.
   GitHub Pages looks for a file named exactly "index.html" and shows it
-  as the front door of your site. Edit the text between the tags, commit,
-  and the live page updates. This is a first draft — easy to refine later.
+  as the front door of your site. Other .html files in the repo become
+  their own pages (e.g. foundation.html lives at /foundation.html).
 -->
 <html lang="en">
 <head>
@@ -70,6 +70,24 @@
     p { font-size: 1.08rem; margin: 0 0 1.1rem; max-width: 56ch; }
     p .name { font-family: "Fraunces", Georgia, serif; font-weight: 600; }
 
+    /* Simple navigation to other pages in the site */
+    nav {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1.4rem;
+      flex-wrap: wrap;
+    }
+    nav a {
+      font-family: "Courier New", monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      text-decoration: none;
+      padding-bottom: 3px;
+      border-bottom: 2px solid var(--marigold);
+    }
+    nav a:hover { color: var(--rust); border-color: var(--rust); }
+
     footer {
       margin-top: 2.8rem;
       padding-top: 1.4rem;
@@ -108,6 +126,12 @@
       The name comes from a school my grandfather co-founded in pre-independence India,
       built on a single idea: the doors are open to anyone curious enough to walk through them.
     </p>
+
+    <!-- Links to other pages. Relative paths (just the filename) keep working
+         even if your username or repo name changes. Add more as you build. -->
+    <nav>
+      <a href="foundation.html">Foundation Canvas &rarr;</a>
+    </nav>
 
     <footer>
       A work in progress &middot; built in the open on
