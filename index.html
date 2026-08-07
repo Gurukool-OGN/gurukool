@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--
+  index.html — the home page for Gurukool.
+  GitHub Pages looks for a file named exactly "index.html" and shows it
+  as the front door of your site. Edit the text between the tags, commit,
+  and the live page updates. This is a first draft — easy to refine later.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gurukool — learn and teach in the open</title>
+  <meta name="description" content="Following curiosity, learning and teaching in the open. If you're curious enough to learn, just come and learn.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink:      #212843;  /* deep indigo, like handmade ink */
+      --paper:    #f6f1e6;  /* warm paper */
+      --marigold: #e0952a;  /* the one warm accent */
+      --rust:     #b9701a;
+      --muted:    #6d6656;
+      --line:     #e0d8c6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    main { max-width: 640px; width: 100%; }
+
+    .eyebrow {
+      font-family: "Courier New", monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--rust);
+      margin-bottom: 1.4rem;
+    }
+
+    /* The founding idea — the hero, the thing to remember */
+    .creed {
+      font-family: "Fraunces", Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 6.5vw, 3.3rem);
+      line-height: 1.12;
+      font-weight: 600;
+      margin: 0 0 1.6rem;
+    }
+    .creed .lead-in { color: var(--muted); font-weight: 400; }
+
+    .rule {
+      width: 56px;
+      height: 3px;
+      background: var(--marigold);
+      border: 0;
+      margin: 0 0 1.6rem;
+    }
+
+    p { font-size: 1.08rem; margin: 0 0 1.1rem; max-width: 56ch; }
+    p .name { font-family: "Fraunces", Georgia, serif; font-weight: 600; }
+
+    footer {
+      margin-top: 2.8rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--line);
+      font-family: "Courier New", monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--rust); text-decoration: none; border-bottom: 1px solid var(--line); }
+    footer a:hover { border-color: var(--rust); }
+
+    /* Gentle entrance — skipped for anyone who prefers less motion */
+    @media (prefers-reduced-motion: no-preference) {
+      main { animation: rise 0.7s ease both; }
+      @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <p class="eyebrow">Gurukool &middot; learning &amp; teaching in the open</p>
+
+    <h1 class="creed">
+      <span class="lead-in">If you're curious enough to learn,</span>
+      just come and learn.
+    </h1>
+    <hr class="rule">
+
+    <p>
+      <span class="name">Gurukool</span> is my attempt to follow curiosity — to learn
+      and to teach out in the open, putting my actual way of working where anyone can
+      see it. Because you learn a thing best by teaching it.
+    </p>
+    <p>
+      The name comes from a school my grandfather co-founded in pre-independence India,
+      built on a single idea: the doors are open to anyone curious enough to walk through them.
+    </p>
+
+    <footer>
+      A work in progress &middot; built in the open on
+      <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+  </main>
+</body>
+</html>
